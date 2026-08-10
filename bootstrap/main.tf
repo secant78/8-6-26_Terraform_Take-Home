@@ -113,6 +113,7 @@ resource "aws_iam_policy" "github_terraform_policy" {
           "ec2:DeleteVpc",
           "ec2:DescribeVpcs",
           "ec2:ModifyVpcAttribute",
+          "ec2:DescribeVpcAttribute",
           "ec2:CreateSubnet",
           "ec2:DeleteSubnet",
           "ec2:DescribeSubnets",
@@ -174,7 +175,10 @@ resource "aws_iam_policy" "github_terraform_policy" {
           "elasticloadbalancing:CreateListener",
           "elasticloadbalancing:DeleteListener",
           "elasticloadbalancing:DescribeListeners",
-          "elasticloadbalancing:ModifyListener"
+          "elasticloadbalancing:ModifyListener",
+          "elasticloadbalancing:AddTags",
+          "elasticloadbalancing:RemoveTags",
+          "elasticloadbalancing:DescribeTags"
         ]
         Resource = "*"
       },
@@ -187,7 +191,8 @@ resource "aws_iam_policy" "github_terraform_policy" {
           "acm:DescribeCertificate",
           "acm:ListCertificates",
           "acm:AddTagsToCertificate",
-          "acm:RemoveTagsFromCertificate"
+          "acm:RemoveTagsFromCertificate",
+          "acm:ListTagsForCertificate"
         ]
         Resource = "*"
       },
