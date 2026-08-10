@@ -1,16 +1,4 @@
-terraform {
-  required_version = ">= 1.5.0"
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
 
-provider "aws" {
-  region = var.aws_region
-}
 
 # ------------------------------------------------------------------------------
 # 1. S3 STATE BUCKET
@@ -51,13 +39,22 @@ resource "aws_s3_bucket_public_access_block" "terraform_state" {
   restrict_public_buckets = true
 }
 
+
 # ------------------------------------------------------------------------------
 # 2. GITHUB OIDC IDENTITY PROVIDER & IAM ROLE
 # ------------------------------------------------------------------------------
 
-# Reference existing account-wide GitHub OIDC Provider
-data "aws_iam_openid_connect_provider" "github" {
-  url = "https://token.actions.githubusercontent.com"
+# ------------------------------------------------------------------------------
+# 2. GITHUB OIDC IDENTITY PROVIDER & IAM ROLE
+# ------------------------------------------------------------------------------
+
+resource "aws_iam_openid_connect_provider" "github" {
+  url             = "https://token.actions.githubusercontent.com"
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = [
+    "6938fd4d98bab03faadb97b34396831e3780aea1",
+    "1c3d23f3063e122b416226cb0029f574e865250d"
+  ]
 }
 
 resource "aws_iam_role" "github_oidc" {
@@ -69,7 +66,7 @@ resource "aws_iam_role" "github_oidc" {
       {
         Effect = "Allow"
         Principal = {
-          Federated = data.aws_iam_openid_connect_provider.github.arn
+          Federated = aws_iam_openid_connect_provider.github.arn
         }
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
@@ -77,17 +74,13 @@ resource "aws_iam_role" "github_oidc" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-            "token.actions.githubusercontent.com:sub" = [
-              "repo:secant78/8-6-26_Terraform_Take-Home:*",
-              "repo:secant78/8-6-26_Terraform_Take-Home:ref:refs/heads/main"
-            ]
+            "token.actions.githubusercontent.com:sub" = "repo:secant78/8-6-26_Terraform_Take-Home:*"
           }
         }
       }
     ]
   })
 }
-
 # ------------------------------------------------------------------------------
 # 3. FINE-GRAINED IAM POLICY & ATTACHMENT
 # ------------------------------------------------------------------------------
