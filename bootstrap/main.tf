@@ -17,7 +17,7 @@ provider "aws" {
 # ------------------------------------------------------------------------------
 
 resource "aws_s3_bucket" "terraform_state" {
-  bucket        = "secant78-terraform-state-dev" # Must be globally unique
+  bucket        = "secant78-terraform-state-dev"
   force_destroy = false
 
   lifecycle {
@@ -55,11 +55,9 @@ resource "aws_s3_bucket_public_access_block" "terraform_state" {
 # 2. GITHUB OIDC IDENTITY PROVIDER & IAM ROLE
 # ------------------------------------------------------------------------------
 
-# Reference existing OIDC provider or create if missing
-resource "aws_iam_openid_connect_provider" "github" {
-  url             = "https://token.actions.githubusercontent.com"
-  client_id_list  = ["sts.amazonaws.com"]
-  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"] # GitHub's standard OIDC thumbprint
+# Reference existing account-wide GitHub OIDC Provider
+data "aws_iam_openid_connect_provider" "github" {
+  url = "https://token.actions.githubusercontent.com"
 }
 
 resource "aws_iam_role" "github_oidc" {
@@ -71,7 +69,7 @@ resource "aws_iam_role" "github_oidc" {
       {
         Effect = "Allow"
         Principal = {
-          Federated = aws_iam_openid_connect_provider.github.arn
+          Federated = data.aws_iam_openid_connect_provider.github.arn
         }
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
