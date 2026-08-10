@@ -55,6 +55,7 @@ resource "aws_s3_bucket_public_access_block" "terraform_state" {
 # 2. GITHUB OIDC IDENTITY PROVIDER & IAM ROLE
 # ------------------------------------------------------------------------------
 
+# Reference existing OIDC provider or create if missing
 resource "aws_iam_openid_connect_provider" "github" {
   url             = "https://token.actions.githubusercontent.com"
   client_id_list  = ["sts.amazonaws.com"]
@@ -78,7 +79,10 @@ resource "aws_iam_role" "github_oidc" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-            "token.actions.githubusercontent.com:sub" = "repo:${var.github_repo}:*"
+            "token.actions.githubusercontent.com:sub" = [
+              "repo:secant78/8-6-26_Terraform_Take-Home:*",
+              "repo:secant78/8-6-26_Terraform_Take-Home:ref:refs/heads/main"
+            ]
           }
         }
       }
@@ -86,8 +90,10 @@ resource "aws_iam_role" "github_oidc" {
   })
 }
 
-# Attach permissions to allowing GitHub Actions to manage resources + state bucket
-# 1. Create the Fine-Grained Policy
+# ------------------------------------------------------------------------------
+# 3. FINE-GRAINED IAM POLICY & ATTACHMENT
+# ------------------------------------------------------------------------------
+
 resource "aws_iam_policy" "github_terraform_policy" {
   name        = "GitHubActionsTerraformDevPolicy"
   description = "Least-privilege permissions for Terraform AWS Dev deployment and S3 state management"
@@ -211,7 +217,6 @@ resource "aws_iam_policy" "github_terraform_policy" {
   })
 }
 
-# 2. Attach the Policy to the GitHub OIDC IAM Role
 resource "aws_iam_role_policy_attachment" "github_oidc_attach" {
   role       = aws_iam_role.github_oidc.name
   policy_arn = aws_iam_policy.github_terraform_policy.arn
