@@ -1,0 +1,17 @@
+# Ignore local Terraform directories & binaries
+**/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# Ignore local secret / var files if any
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore OS metadata
+.DS_Store
+Thumbs.db
