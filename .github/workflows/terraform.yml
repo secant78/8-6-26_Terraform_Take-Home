@@ -17,6 +17,10 @@ permissions:
   id-token: write # Mandatory for OIDC token retrieval
   contents: read  # Mandatory for repository checkout
 
+concurrency:
+  group: terraform-dev
+  cancel-in-progress: false
+
 jobs:
   terraform:
     name: "Terraform Plan & Apply"
