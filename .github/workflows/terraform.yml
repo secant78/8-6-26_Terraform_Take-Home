@@ -1,100 +1,54 @@
-name: "Terraform - AWS Dev Deployment"
+name: Terraform - AWS Dev Deployment
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
     paths:
-      - "environments/aws/dev/**"
-      - "modules/aws/**"
+      - 'environments/aws/dev/**'
+      - 'modules/aws/**'
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
     paths:
-      - "environments/aws/dev/**"
-      - "modules/aws/**"
+      - 'environments/aws/dev/**'
+      - 'modules/aws/**'
+  workflow_dispatch:
 
-# Mandatory permissions required for OIDC authentication
 permissions:
-  id-token: write
-  contents: read
-  pull-requests: write
+  id-token: write # Mandatory for OIDC token retrieval
+  contents: read  # Mandatory for repository checkout
 
 jobs:
   terraform:
     name: "Terraform Plan & Apply"
     runs-on: ubuntu-latest
-
-    # Set working directory to the root of your dev environment
     defaults:
       run:
-        working-directory: "environments/aws/dev"
+        working-directory: environments/aws/dev
 
     steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Configure AWS Credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-            role-to-assume: arn:aws:iam::866934333672:role/sean-terraform-project-oidc-role
-            aws-region: us-east-1
-            
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.6.0"
+          terraform_version: "1.14.0"
 
-      - name: Terraform Format Check
-        id: fmt
-        run: terraform fmt -check -recursive ../../../modules/aws
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::866934333672:role/sean-terraform-project-oidc-role
+          aws-region: us-east-1
 
       - name: Terraform Init
-        id: init
         run: terraform init
 
-      - name: Terraform Validate
-        id: validate
-        run: terraform validate
+      - name: Terraform Format Check
+        run: terraform fmt -check
 
       - name: Terraform Plan
-        id: plan
-        if: github.event_name == 'pull_request'
-        run: terraform plan -no-color -input=false
-        continue-on-error: true
-
-      - name: Post Plan to Pull Request
-        uses: actions/github-script@v7
-        if: github.event_name == 'pull_request'
-        with:
-          script: |
-            const output = `#### Terraform Format & Style 🖌 \`${{ steps.fmt.outcome }}\`
-            #### Terraform Initialization ⚙️ \`${{ steps.init.outcome }}\`
-            #### Terraform Validation 🤖 \`${{ steps.validate.outcome }}\`
-            #### Terraform Plan 📖 \`${{ steps.plan.outcome }}\`
-
-            <details><summary>Show Plan Output</summary>
-
-            \`\`\`\n
-            ${process.env.PLAN}
-            \`\`\`
-
-            </details>`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
-        env:
-          PLAN: "${{ steps.plan.outputs.stdout }}"
-
-      - name: Terraform Plan Status Check
-        if: github.event_name == 'pull_request' && steps.plan.outcome == 'failure'
-        run: exit 1
+        run: terraform plan -no-color
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve -input=false
+        run: terraform apply -auto-approve -no-color
