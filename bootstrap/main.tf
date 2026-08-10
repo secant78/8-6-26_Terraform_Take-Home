@@ -197,11 +197,23 @@ resource "aws_iam_policy" "github_terraform_policy" {
         Resource = "*"
       },
       {
+        Sid    = "ReadOnlyDescribeAccess"
+        Effect = "Allow"
+        Action = [
+          "ec2:Describe*",
+          "elasticloadbalancing:Describe*",
+          "acm:Describe*",
+          "acm:List*"
+        ]
+        Resource = "*"
+      },
+      {
         Sid    = "ReadMetadataAndDataSources"
         Effect = "Allow"
         Action = [
           "ec2:DescribeAvailabilityZones",
           "ec2:DescribeImages",
+          "ec2:DescribeInstanceTypes",
           "sts:GetCallerIdentity"
         ]
         Resource = "*"
