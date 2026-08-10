@@ -44,8 +44,8 @@ resource "aws_s3_bucket_public_access_block" "terraform_state" {
 # ------------------------------------------------------------------------------
 
 resource "aws_iam_openid_connect_provider" "github" {
-  url             = "https://token.actions.githubusercontent.com"
-  client_id_list  = ["sts.amazonaws.com"]
+  url            = "https://token.actions.githubusercontent.com"
+  client_id_list = ["sts.amazonaws.com"]
   thumbprint_list = [
     "6938fd4d98bab03faadb97b34396831e3780aea1",
     "1c3d23f3063e122b416226cb0029f574e865250d"
@@ -66,10 +66,12 @@ resource "aws_iam_role" "github_oidc" {
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
           StringEquals = {
-            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+            "token.actions.githubusercontent.com:aud"                 = "sts.amazonaws.com"
+            "token.actions.githubusercontent.com:repository_id"       = "1329312291"
+            "token.actions.githubusercontent.com:repository_owner_id" = "24193179"
           }
           StringLike = {
-            "token.actions.githubusercontent.com:sub" = "repo:secant78/8-6-26_Terraform_Take-Home:*"
+            "token.actions.githubusercontent.com:sub" = "repo:secant78@24193179/8-6-26_Terraform_Take-Home@1329312291:*"
           }
         }
       }
